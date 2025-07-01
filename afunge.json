@@ -1,0 +1,6 @@
+{
+    "main": "main.afunge",
+    "map": "map.afunge",
+    "tolerant": false,
+    "debug": false
+}
