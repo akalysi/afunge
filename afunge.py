@@ -80,21 +80,25 @@ def init():
 
 def pos(x=x, y=y):
     global mapcont
-    row = mapcont.split("\n")[y]
-    col = row[x]
+    row = mapcont.split("\n")[abs(y)]
+    col = row[abs(x)]
+    print(f"calling from pos. returning {col}. following is the row.\n{row}")
     return col
 
 def check():
+    print(f"hey boss, pos is {pos()}, our coords are {x}, {y}. checking {abs(x)}, {abs(y)}")
     if pos() in mapfunc:
+        print(f"hey boss, we got a map function, it's {pos()}")
         mapfunc[pos()]()
 
 def main():
     for ln in runcont.split("\n"):
         ln = ln.split("=")[0]
         for char in ln:
-            check()
             if char in functions:
+                print(f"hey boss, we got a main function, it's {char}")
                 functions[char]()
+            check()
     input("Press enter to continue... > ")
 
 init()
