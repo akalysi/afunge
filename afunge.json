@@ -3,5 +3,6 @@
     "map": "map.afunge",
     "tolerant": false,
     "debugTolerant": false,
-    "inclusiveTime": false
+    "inclusiveTime": false,
+    "spawnPosition": [1, 1]
 }

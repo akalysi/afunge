@@ -16,6 +16,9 @@ debug_tolerance = False
 tolerance = False
 inclusive_time = False
 
+cur_ln = -1
+cur_char = -1
+
 ignoreCheck = False
 
 x = y = 0
@@ -50,34 +53,90 @@ def deccur():
     memcur -= 1
 def incint():
     global intmem, memcur
-    intmem[memcur] += 1
-def incinten():
-    global intmem, memcur
-    intmem[memcur] += 10
+    if len(intmem) > memcur:
+        intmem[memcur] += 1
+    else:
+        AfungeException(f"No integer allocated to be at index {memcur}.", cur_ln, cur_char, True)
 def decint():
     global intmem, memcur
-    intmem[memcur] -= 1
+    if len(intmem) > memcur:
+        intmem[memcur] -= 1
+    else:
+        AfungeException(f"No integer allocated to be at index {memcur}.", cur_ln, cur_char, True)
 def zerint():
     global intmem, memcur
-    intmem[memcur] = 0
+    if len(intmem) > memcur:
+        intmem[memcur] = 0
+    else:
+        AfungeException(f"No integer allocated to be at index {memcur}.", cur_ln, cur_char, True)
 def clearint():
     global intmem
     intmem = []
+def dubint():
+    global intmem, memcur
+    if len(intmem) > memcur:
+        intmem[memcur] *= 2
+    else:
+        AfungeException(f"No integer allocated to be at index {memcur}.", cur_ln, cur_char, True)
 def stradd():
     global strmem, intmem, memcur
-    strmem[memcur] += chr(intmem[memcur])
+    if len(intmem) > memcur and len(strmem) > memcur:
+        strmem[memcur] += chr(intmem[memcur])
+    if len(intmem) < memcur:
+        AfungeException(f"No integer allocated to be at index {memcur}.", cur_ln, cur_char, True)
+    if len(strmem) < memcur:
+        AfungeException(f"No string allocated to be at index {memcur}.", cur_ln, cur_char, True)
 def strclr():
     global strmem, memcur
-    strmem[memcur] = ""
+    if len(strmem) > memcur:
+        strmem[memcur] = ""
+    else:
+        AfungeException(f"No string allocated to be at index {memcur}.", cur_ln, cur_char, True)
 def strmemclr():
     global strmem
     strmem = []
 def intout():
     global intmem, memcur
-    print(intmem[memcur])
+    if len(intmem) > memcur:
+        print(intmem[memcur])
+    else:
+        AfungeException(f"No integer allocated to be at index {memcur}.", cur_ln, cur_char, True)
 def strout():
     global strmem, memcur
-    print(strmem[memcur])
+    if len(strmem) > memcur:
+        print(strmem[memcur])
+    else:
+        AfungeException(f"No string allocated to be at index {memcur}.", cur_ln, cur_char, True)
+def ifright():
+    global x, intmem, memcur
+    if len(intmem) > memcur:
+        if time > intmem[memcur]:
+            x += 1
+    else:
+        AfungeException(f"No integer allocated to be at index {memcur}.", cur_ln, cur_char, True)
+def ifleft():
+    global x, intmem, memcur
+    if len(intmem) > memcur:
+        if time > intmem[memcur]:
+            x -= 1
+    else:
+        AfungeException(f"No integer allocated to be at index {memcur}.", cur_ln, cur_char, True)
+def ifup():
+    global y, intmem, memcur
+    if len(intmem) > memcur:
+        if time > intmem[memcur]:
+            x -= 1
+    else:
+        AfungeException(f"No integer allocated to be at index {memcur}.", cur_ln, cur_char, True)
+def ifdown():
+    global y, intmem, memcur
+    if len(intmem) > memcur: 
+        if time > intmem[memcur]:
+            y += 1
+    else:
+        AfungeException(f"No integer allocated to be at index {memcur}.", cur_ln, cur_char, True)
+def test():
+    print("test")
 
 functions = {
     ">": right,
@@ -95,22 +154,27 @@ mapfunc = {
     "+": inccur,
     "-": deccur,
     "=": incint,
-    "9": incinten,
     "_": decint,
     "0": zerint,
     ")": clearint,
+    "d": dubint,
     "(": strmemclr,
     "*": stradd,
     "8": strclr,
     "1": intout,
-    "!": strout
+    "!": strout,
+    "^": ifup,
+    "<": ifleft,
+    "v": ifdown,
+    ">": ifright,
+    "t": test
 }
 
 def AfungeException(e, ln, fn, lnfn):
     if tolerance:
         return "Error tolerated."
     if lnfn:
-        print(f"[red]File {fn}, line {ln}\nAfunge Error: {e}[/red]")
+        print(f"[red]Line {ln}, char {fn}\nAfunge Error: {e}[/red]")
     else:
         print(f"Afunge Error: {e}[/red]")
     if debug_tolerance:
@@ -118,7 +182,7 @@ def AfungeException(e, ln, fn, lnfn):
     exit()
 
 def init():
-    global runfile, mapfile, mapcont, runcont, settings, tolerance, debug_tolerance, inclusive_time
+    global runfile, mapfile, mapcont, runcont, settings, tolerance, debug_tolerance, inclusive_time, x, y
 
     if not os.path.exists("afunge.json"):
         AfungeException("Afunge settings file was not found.")
@@ -140,6 +204,9 @@ def init():
         debug_tolerance = settings["debugTolerant"]
     if "inclusiveTime" in settings:
         inclusive_time = settings["inclusiveTime"]
+    if "spawnPosition" in settings:
+        x = settings["spawnPosition"][0]
+        y = settings["spawnPosition"][1]
 
     with open(mapfile) as file:
         mapcont = file.read()
@@ -148,30 +215,33 @@ def init():
 
 def pos():
     global mapcont, x, y
-    if len(mapcont.split("\n")) < y: y = len(mapcont.split)
-    row = mapcont.split("\n")[y]
-    if len(row) < x: x = len(row)
-    col = row[x]
-    # print(f"calling from pos. returning {col}. following is the row.\n{row}")
+    try:
+        row = mapcont.split("\n")[y]
+    except IndexError:
+        AfungeException(f"Less than y value {y} lines in map file.", cur_ln, cur_char, True)
+    try:
+        col = row[x]
+    except IndexError:
+        AfungeException(f"Less than x value {x} chars in current {y} line.", cur_ln, cur_char, True)
     return col
 
 def check():
-    # print(f"hey boss, pos is {pos()}, our coords are {x}, {y}")
     if pos() in mapfunc:
-        # print(f"hey boss, we got a map function, it's {pos()}")
+        print(f"hey boss we got a map {pos()}")
         mapfunc[pos()]()
 
 def main():
-    global time
+    global time, cur_ln, cur_char
     for ln in runcont.split("\n"):
+        cur_ln = runcont.split("\n").index(ln)
         ln = ln.split("=")[0]
         for char in ln:
+            cur_char = list(ln).index(char)
             if inclusive_time:
                 time += 1
             if char in functions:
                 if not inclusive_time:
                     time += 1
-                # print(f"hey boss, we got a main function, it's {char}")
                 functions[char]()
             if char != "0":
                 check()
